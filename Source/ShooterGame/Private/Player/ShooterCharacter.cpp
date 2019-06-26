@@ -67,6 +67,11 @@ AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer
 
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
+
+	JetHoverSpeed = 100.f;
+	FuelBurnRate = 1.f;
+	RefuelRate = 1.f;
+	bFlying = false;
 }
 
 void AShooterCharacter::PostInitializeComponents()
@@ -76,6 +81,7 @@ void AShooterCharacter::PostInitializeComponents()
 	if (Role == ROLE_Authority)
 	{
 		Health = GetMaxHealth();
+		Fuel = GetMaxFuel();
 		SpawnDefaultInventory();
 	}
 
@@ -107,6 +113,18 @@ void AShooterCharacter::Destroyed()
 {
 	Super::Destroyed();
 	DestroyInventory();
+}
+
+void AShooterCharacter::Landed(const FHitResult & Hit)
+{
+	Super::Landed(Hit);
+
+	if (Role == ROLE_Authority && bFlying)
+	{
+		GetCharacterMovement()->AirControl = GetDefault<AShooterCharacter>()->GetCharacterMovement()->AirControl;
+		GetCharacterMovement()->MaxWalkSpeed = GetDefault<AShooterCharacter>()->GetCharacterMovement()->MaxWalkSpeed;
+		bFlying = false;
+	}
 }
 
 void AShooterCharacter::PawnClientRestart()
@@ -552,6 +570,36 @@ bool AShooterCharacter::IsMoving()
 	return FMath::Abs(GetLastMovementInputVector().Size()) > 0.f;
 }
 
+void AShooterCharacter::Hovering()
+{
+	if (Role != ROLE_Authority) return;
+
+	if (Fuel > 0.f)
+	{
+		LaunchCharacter(FVector(0.f, 0.f, JetHoverSpeed), false, false);
+		Fuel -= FuelBurnRate;
+	}
+	else
+	{
+		GetWorldTimerManager().ClearTimer(JetPackTimerHandle);
+		Fuel = 0.f;
+	}
+}
+
+void AShooterCharacter::RechargeFuel()
+{
+	if (Role != ROLE_Authority) return;
+
+	if (Fuel < GetMaxFuel())
+	{
+		Fuel += RefuelRate;
+	}
+	else
+	{
+		Fuel = GetMaxFuel();
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Inventory
 
@@ -874,6 +922,9 @@ void AShooterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &AShooterCharacter::OnStartRunning);
 	PlayerInputComponent->BindAction("RunToggle", IE_Pressed, this, &AShooterCharacter::OnStartRunningToggle);
 	PlayerInputComponent->BindAction("Run", IE_Released, this, &AShooterCharacter::OnStopRunning);
+
+	PlayerInputComponent->BindAction("Jet", IE_Pressed, this, &AShooterCharacter::OnActivateJet);
+	PlayerInputComponent->BindAction("Jet", IE_Released, this, &AShooterCharacter::OnDeactivateJet);
 }
 
 
@@ -1032,6 +1083,22 @@ void AShooterCharacter::OnStartRunningToggle()
 void AShooterCharacter::OnStopRunning()
 {
 	SetRunning(false, false);
+}
+
+void AShooterCharacter::OnActivateJet()
+{
+	if (Role == ROLE_Authority)
+	{
+		GetCharacterMovement()->AirControl = 0.5f;
+		GetCharacterMovement()->MaxWalkSpeed = 2000.f;
+	}
+
+	ServerStartHover();
+}
+
+void AShooterCharacter::OnDeactivateJet()
+{
+	ServerStopHover();
 }
 
 bool AShooterCharacter::IsRunning() const
@@ -1267,6 +1334,11 @@ int32 AShooterCharacter::GetMaxHealth() const
 	return GetClass()->GetDefaultObject<AShooterCharacter>()->Health;
 }
 
+float AShooterCharacter::GetMaxFuel() const
+{
+	return GetClass()->GetDefaultObject<AShooterCharacter>()->Fuel;
+}
+
 bool AShooterCharacter::IsAlive() const
 {
 	return Health > 0;
@@ -1300,4 +1372,28 @@ void AShooterCharacter::BuildPauseReplicationCheckPoints(TArray<FVector>& Releva
 	RelevancyCheckPoints.Add(FVector(BoundingBox.Max.X, BoundingBox.Max.Y - YDiff, BoundingBox.Max.Z));
 	RelevancyCheckPoints.Add(FVector(BoundingBox.Max.X - XDiff, BoundingBox.Max.Y - YDiff, BoundingBox.Max.Z));
 	RelevancyCheckPoints.Add(BoundingBox.Max);
+}
+
+void AShooterCharacter::ServerStartHover_Implementation()
+{
+	bFlying = true;
+
+	GetWorldTimerManager().ClearTimer(JetPackTimerHandle);
+	GetWorldTimerManager().SetTimer(JetPackTimerHandle, this, &AShooterCharacter::Hovering, 0.1f, true);
+}
+
+bool AShooterCharacter::ServerStartHover_Validate()
+{
+	return true;
+}
+
+void AShooterCharacter::ServerStopHover_Implementation()
+{
+	GetWorldTimerManager().ClearTimer(JetPackTimerHandle);
+	GetWorldTimerManager().SetTimer(JetPackTimerHandle, this, &AShooterCharacter::RechargeFuel, 0.1f, true);
+}
+
+bool AShooterCharacter::ServerStopHover_Validate()
+{
+	return true;
 }

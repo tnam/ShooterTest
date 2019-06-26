@@ -66,6 +66,9 @@ AShooterHUD::AShooterHUD(const FObjectInitializer& ObjectInitializer) : Super(Ob
 	HealthBar = UCanvas::MakeIcon(HUDAssets02Texture, 67, 212, 372, 50);
 	HealthBarBg = UCanvas::MakeIcon(HUDAssets02Texture, 67, 162, 372, 50);
 
+	FuelBar = UCanvas::MakeIcon(HUDAssets02Texture, 67, 212, 372, 50);
+	FuelBarBg = UCanvas::MakeIcon(HUDAssets02Texture, 67, 162, 372, 50);
+
 	HealthIcon = UCanvas::MakeIcon(HUDAssets02Texture, 78, 262, 28, 28);
 	KillsIcon = UCanvas::MakeIcon(HUDMainTexture, 318, 93, 24, 24);
 	TimerIcon = UCanvas::MakeIcon(HUDMainTexture, 381, 93, 24, 24);
@@ -333,6 +336,24 @@ void AShooterHUD::DrawHealth()
 	Canvas->DrawIcon(HealthIcon,HealthPosX + Offset * ScaleUI, HealthPosY + (HealthBar.VL - HealthIcon.VL) / 2.0f * ScaleUI, ScaleUI);
 }
 
+void AShooterHUD::DrawFuel()
+{
+	AShooterCharacter* MyPawn = Cast<AShooterCharacter>(GetOwningPawn());
+	Canvas->SetDrawColor(FColor::White);
+	const float FuelPosX = (Canvas->ClipX - FuelBarBg.UL * ScaleUI) / 2;
+	const float FuelPosY = Canvas->ClipY - (Offset + FuelBarBg.VL) * ScaleUI * 2;
+	Canvas->DrawIcon(FuelBarBg, FuelPosX, FuelPosY, ScaleUI);
+	const float FuelAmount = FMath::Min(1.0f, MyPawn->Fuel / MyPawn->GetMaxFuel());
+
+	FCanvasTileItem TileItem(FVector2D(FuelPosX, FuelPosY), FuelBar.Texture->Resource,
+		FVector2D(FuelBar.UL * FuelAmount  * ScaleUI, FuelBar.VL * ScaleUI), FLinearColor::White);
+	MakeUV(FuelBar, TileItem.UV0, TileItem.UV1, FuelBar.U, FuelBar.V, FuelBar.UL * FuelAmount, FuelBar.VL);
+	TileItem.BlendMode = SE_BLEND_Translucent;
+	Canvas->DrawItem(TileItem);
+
+	Canvas->DrawIcon(TimerIcon, FuelPosX + Offset * ScaleUI, FuelPosY + (FuelBar.VL - TimerIcon.VL) / 2.0f * ScaleUI, ScaleUI);
+}
+
 void AShooterHUD::DrawMatchTimerAndPosition()
 {
 	AShooterGameState* const MyGameState = GetWorld()->GetGameState<AShooterGameState>();
@@ -577,6 +598,7 @@ void AShooterHUD::DrawHUD()
 		if (MyPawn && MyPawn->IsAlive())
 		{
 			DrawHealth();
+			DrawFuel();
 			DrawWeaponHUD();
 		}
 		else

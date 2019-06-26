@@ -232,6 +232,15 @@ protected:
 	UPROPERTY()
 	FCanvasIcon PlaceIcon;
 
+	/** Jet pack fuel bar background icon. */
+	UPROPERTY()
+	FCanvasIcon FuelBarBg;
+
+	/** Jet pack fuel bar icon. */
+	UPROPERTY()
+	FCanvasIcon FuelBar;
+
+
 	/** UI scaling factor for other resolutions than Full HD. */
 	float ScaleUI;
 
@@ -325,6 +334,9 @@ protected:
 
 	/** Draw player's health bar. */
 	void DrawHealth();
+
+	/** Draw player's fuel bar. */
+	void DrawFuel();
 
 	/** Draws match timer and player position. */
 	void DrawMatchTimerAndPosition();

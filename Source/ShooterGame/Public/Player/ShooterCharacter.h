@@ -24,6 +24,9 @@ class AShooterCharacter : public ACharacter
 	/** cleanup inventory */
 	virtual void Destroyed() override;
 
+	/** Landing event */
+	void Landed(const FHitResult& Hit) override;
+
 	/** update mesh for first person view */
 	virtual void PawnClientRestart() override;
 
@@ -194,6 +197,12 @@ class AShooterCharacter : public ACharacter
 	/** player released run action */
 	void OnStopRunning();
 
+	/** player pressed jet action */
+	void OnActivateJet();
+
+	/** player released jet action */
+	void OnDeactivateJet();
+
 	//////////////////////////////////////////////////////////////////////////
 	// Reading data
 
@@ -250,6 +259,9 @@ class AShooterCharacter : public ACharacter
 	/** get max health */
 	int32 GetMaxHealth() const;
 
+	/** get max fuel */
+	float GetMaxFuel() const;
+
 	/** check if pawn is still alive */
 	bool IsAlive() const;
 
@@ -270,6 +282,8 @@ private:
 	/** pawn mesh: 1st person view */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	USkeletalMeshComponent* Mesh1P;
+
+	FTimerHandle JetPackTimerHandle;
 protected:
 
 	/** socket or bone name for attaching weapon mesh */
@@ -325,6 +339,17 @@ protected:
 
 	/** Base lookup rate, in deg/sec. Other scaling may affect final lookup rate. */
 	float BaseLookUpRate;
+
+	/** how much the player gains height when using the jet pack */
+	float JetHoverSpeed;
+
+	/** amount of fuel spent with the jet pack activated */
+	float FuelBurnRate;
+
+	/** automatic refuel when the jet pack is not in use */
+	float RefuelRate;
+
+	bool bFlying;
 
 	/** material instances for setting team color in mesh (3rd person view) */
 	UPROPERTY(Transient)
@@ -387,6 +412,12 @@ private:
 	/** Whether or not the character is moving (based on movement input). */
 	bool IsMoving();
 
+	/** Jetpack hovering action */
+	void Hovering();
+
+	/** Recharge jetpack's fuel */
+	void RechargeFuel();
+
 	//////////////////////////////////////////////////////////////////////////
 	// Damage & death
 
@@ -399,6 +430,10 @@ public:
 	// Current health of the Pawn
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Health)
 	float Health;
+
+	/** Current jet's fuel */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Fuel)
+	float Fuel;
 
 	/** Take damage, handle death */
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
@@ -474,6 +509,14 @@ protected:
 
 	/** Builds list of points to check for pausing replication for a connection*/
 	void BuildPauseReplicationCheckPoints(TArray<FVector>& RelevancyCheckPoints);
+
+	/** start hovering movement */
+	UFUNCTION(reliable, server, WithValidation)
+	void ServerStartHover();
+
+	/** stop hovering movement */
+	UFUNCTION(reliable, server, WithValidation)
+	void ServerStopHover();
 
 protected:
 	/** Returns Mesh1P subobject **/
