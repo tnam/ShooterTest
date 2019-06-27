@@ -68,7 +68,7 @@ AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 
-	JetHoverSpeed = 200.f;
+	JetHoverSpeed = 300.f;
 	Fuel = 100.f;
 	FuelBurnRate = 1.f;
 	RefuelRate = 1.f;
@@ -1200,7 +1200,14 @@ void AShooterCharacter::OnStartJump()
 	AShooterPlayerController* MyPC = Cast<AShooterPlayerController>(Controller);
 	if (MyPC && MyPC->IsGameInputAllowed())
 	{
-		bPressedJump = true;
+		if (bFlying)
+		{
+			ServerStartWallJump();
+		}
+		else
+		{
+			bPressedJump = true;
+		}
 	}
 }
 
@@ -1374,6 +1381,39 @@ void AShooterCharacter::BuildPauseReplicationCheckPoints(TArray<FVector>& Releva
 	RelevancyCheckPoints.Add(FVector(BoundingBox.Max.X, BoundingBox.Max.Y - YDiff, BoundingBox.Max.Z));
 	RelevancyCheckPoints.Add(FVector(BoundingBox.Max.X - XDiff, BoundingBox.Max.Y - YDiff, BoundingBox.Max.Z));
 	RelevancyCheckPoints.Add(BoundingBox.Max);
+}
+
+void AShooterCharacter::ServerStartWallJump_Implementation()
+{
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.bTraceComplex = true;
+	const float RayLength = 200.f;
+
+	FVector Directions[] = { GetActorRightVector(), -GetActorRightVector() };
+
+	for (const auto& Dir : Directions)
+	{
+		FVector TraceStart = GetActorLocation();
+		FVector TraceEnd = TraceStart + Dir * RayLength;
+		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, Params);
+
+		if (bHit)
+		{
+			const float LateralJumpForce = 500.f;
+			const float UpwardJumpForce = 300.f;
+			FVector Normal = Hit.ImpactNormal;
+			FVector JumpVelocity = (Normal * LateralJumpForce + FVector::UpVector * UpwardJumpForce);
+
+			LaunchCharacter(JumpVelocity, false, false);
+			break;
+		}
+	}
+}
+
+bool AShooterCharacter::ServerStartWallJump_Validate()
+{
+	return true;
 }
 
 void AShooterCharacter::ServerStartHover_Implementation()
