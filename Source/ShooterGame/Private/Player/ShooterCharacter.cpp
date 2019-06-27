@@ -68,7 +68,8 @@ AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 
-	JetHoverSpeed = 100.f;
+	JetHoverSpeed = 200.f;
+	Fuel = 100.f;
 	FuelBurnRate = 1.f;
 	RefuelRate = 1.f;
 	bFlying = false;
@@ -1090,7 +1091,7 @@ void AShooterCharacter::OnActivateJet()
 	if (Role == ROLE_Authority)
 	{
 		GetCharacterMovement()->AirControl = 0.5f;
-		GetCharacterMovement()->MaxWalkSpeed = 2000.f;
+		GetCharacterMovement()->MaxWalkSpeed = 800.f;
 	}
 
 	ServerStartHover();
@@ -1226,6 +1227,7 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
 
 	// only to local owner: weapon change requests are locally instigated, other clients don't need it
 	DOREPLIFETIME_CONDITION(AShooterCharacter, Inventory, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(AShooterCharacter, Fuel, COND_OwnerOnly);
 
 	// everyone except local owner: flag change is locally instigated
 	DOREPLIFETIME_CONDITION(AShooterCharacter, bIsTargeting, COND_SkipOwner);
