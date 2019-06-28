@@ -9,6 +9,7 @@
 #include "Animation/AnimInstance.h"
 #include "Sound/SoundNodeLocalPlayer.h"
 #include "AudioThread.h"
+#include "Pickups/ShooterPickup_Weapon.h"
 
 static int32 NetVisualizeRelevancyTestPoints = 0;
 FAutoConsoleVariableRef CVarNetVisualizeRelevancyTestPoints(
@@ -382,6 +383,8 @@ void AShooterCharacter::OnDeath(float KillingDamage, struct FDamageEvent const& 
 		UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
 	}
 
+	DropWeapon();
+
 	// remove all weapons
 	DestroyInventory();
 
@@ -645,6 +648,24 @@ void AShooterCharacter::DestroyInventory()
 		{
 			RemoveWeapon(Weapon);
 			Weapon->Destroy();
+		}
+	}
+}
+
+void AShooterCharacter::DropWeapon()
+{
+	if (Role < ROLE_Authority) return;
+			
+	if(CurrentWeapon)
+	{
+		RemoveWeapon(CurrentWeapon);
+
+		FTransform const SpawnTransform(FQuat::Identity, GetActorLocation());
+		auto WeaponPickup = GetWorld()->SpawnActorDeferred<AShooterPickup_Weapon>(PickupTemplate, SpawnTransform);
+		if (WeaponPickup)
+		{
+			WeaponPickup->SetWeapon(CurrentWeapon);
+			UGameplayStatics::FinishSpawningActor(WeaponPickup, SpawnTransform);
 		}
 	}
 }

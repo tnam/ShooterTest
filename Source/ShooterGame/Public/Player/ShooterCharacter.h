@@ -407,6 +407,9 @@ protected:
 	/** Responsible for cleaning up bodies on clients. */
 	virtual void TornOff();
 
+	UPROPERTY(EditDefaultsOnly, Category=Pickup)
+	TSubclassOf<class AShooterPickup_Weapon> PickupTemplate;
+
 private:
 
 	/** Whether or not the character is moving (based on movement input). */
@@ -494,6 +497,9 @@ protected:
 
 	/** [server] remove all weapons from inventory and destroy them */
 	void DestroyInventory();
+
+	/** [server] drop currently equipped weapon before dying */
+	void DropWeapon();
 
 	/** equip weapon */
 	UFUNCTION(reliable, server, WithValidation)
