@@ -22,6 +22,7 @@ class AShooterPickup_Weapon : public AShooterPickup
 protected:
 
 	/** weapon pickup */
+	UPROPERTY()
 	class AShooterWeapon* Weapon;
 
 	/** give pickup */

@@ -46,6 +46,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category=Pickup)
 	float RespawnTime;
 
+	/** how long it should stay on the map */
+	UPROPERTY(EditDefaultsOnly, Category = Pickup)
+	float Lifetime;
+
 	/** is it ready for interactions? */
 	UPROPERTY(Transient, ReplicatedUsing=OnRep_IsActive)
 	uint32 bIsActive:1;

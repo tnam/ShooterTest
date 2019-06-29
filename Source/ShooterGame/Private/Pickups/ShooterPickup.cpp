@@ -19,6 +19,7 @@ AShooterPickup::AShooterPickup(const FObjectInitializer& ObjectInitializer) : Su
 	PickupPSC->bAutoDestroy = false;
 	PickupPSC->SetupAttachment(RootComponent);
 
+	Lifetime = 0.f;
 	RespawnTime = 10.0f;
 	bIsActive = false;
 	PickedUpBy = NULL;
@@ -38,6 +39,17 @@ void AShooterPickup::BeginPlay()
 	if (GameMode)
 	{
 		GameMode->LevelPickups.Add(this);
+	}
+
+	if (Lifetime > 0.f)
+	{
+		FTimerHandle DummyHandle;
+		auto DestroyPickup = [&]()
+		{
+			Destroy();
+		};
+
+		GetWorldTimerManager().SetTimer(DummyHandle, DestroyPickup, Lifetime, false);
 	}
 }
 
@@ -73,6 +85,10 @@ void AShooterPickup::PickupOnTouch(class AShooterCharacter* Pawn)
 				if (RespawnTime > 0.0f)
 				{
 					GetWorldTimerManager().SetTimer(TimerHandle_RespawnPickup, this, &AShooterPickup::RespawnPickup, RespawnTime, false);
+				}
+				else
+				{
+					Destroy();
 				}
 			}
 		}

@@ -675,7 +675,7 @@ void AShooterCharacter::AddWeapon(AShooterWeapon* Weapon)
 	if (Weapon && Role == ROLE_Authority)
 	{
 		Weapon->OnEnterInventory(this);
-		Inventory.AddUnique(Weapon);
+		Inventory.Add(Weapon);  // For this simple demo, allow an unlimited number of (dupe) weapons to be added
 	}
 }
 
