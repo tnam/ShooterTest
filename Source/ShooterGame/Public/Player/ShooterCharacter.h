@@ -541,6 +541,12 @@ protected:
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerStartWallJump();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void JetOnEvent();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void JetOffEvent();
+
 protected:
 	/** Returns Mesh1P subobject **/
 	FORCEINLINE USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }

@@ -1163,11 +1163,13 @@ void AShooterCharacter::OnActivateJet()
 	}
 
 	ServerStartHover();
+	JetOnEvent();
 }
 
 void AShooterCharacter::OnDeactivateJet()
 {
 	ServerStopHover();
+	JetOffEvent();
 }
 
 bool AShooterCharacter::IsRunning() const
