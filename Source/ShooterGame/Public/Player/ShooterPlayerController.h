@@ -93,6 +93,8 @@ public:
 	/** set health regen cheat */
 	void SetHealthRegen(bool bEnable);
 
+	void SetFreezeMode(bool bEnable);
+
 	/** set god mode cheat */
 	UFUNCTION(exec)
 	void SetGodMode(bool bEnable);

@@ -626,6 +626,11 @@ void AShooterPlayerController::SetHealthRegen(bool bEnable)
 	bHealthRegen = bEnable;
 }
 
+void AShooterPlayerController::SetFreezeMode(bool bEnable)
+{
+	bAllowGameActions = !bEnable;
+}
+
 void AShooterPlayerController::SetGodMode(bool bEnable)
 {
 	bGodMode = bEnable;

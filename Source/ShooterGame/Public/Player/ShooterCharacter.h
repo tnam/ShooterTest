@@ -265,6 +265,8 @@ class AShooterCharacter : public ACharacter
 	/** check if pawn is still alive */
 	bool IsAlive() const;
 
+	bool IsFreezed() const { return bFreezed; }
+
 	/** returns percentage of health when low health effects should start */
 	float GetLowHealthPercentage() const;
 
@@ -421,10 +423,21 @@ private:
 	/** Recharge jetpack's fuel */
 	void RechargeFuel();
 
+	/** Check if any status must be applied to the character */
+	void ProcessDamage(const FDamageEvent& DamageEvent);
+
 	//////////////////////////////////////////////////////////////////////////
 	// Damage & death
 
+	/** Set freeze status */
+	UFUNCTION(Client, Reliable)
+	void FreezePlayer(bool bEnabled);
+
 public:
+
+	/** In this state the player is unable to move or shoot*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Status Effect")
+	bool bFreezed;
 
 	/** Identifies if pawn is in its dying state */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health)

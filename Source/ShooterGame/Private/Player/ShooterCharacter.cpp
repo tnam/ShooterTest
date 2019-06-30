@@ -74,6 +74,8 @@ AShooterCharacter::AShooterCharacter(const FObjectInitializer& ObjectInitializer
 	FuelBurnRate = 1.f;
 	RefuelRate = 1.f;
 	bFlying = false;
+
+	bFreezed = false;
 }
 
 void AShooterCharacter::PostInitializeComponents()
@@ -274,6 +276,8 @@ void AShooterCharacter::KilledBy(APawn* EventInstigator)
 
 float AShooterCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser)
 {
+	ProcessDamage(DamageEvent);
+
 	AShooterPlayerController* MyPC = Cast<AShooterPlayerController>(Controller);
 	if (MyPC && MyPC->HasGodMode())
 	{
@@ -601,6 +605,49 @@ void AShooterCharacter::RechargeFuel()
 	else
 	{
 		Fuel = GetMaxFuel();
+	}
+}
+
+void AShooterCharacter::ProcessDamage(const FDamageEvent& DamageEvent)
+{
+	if (!DamageEvent.DamageTypeClass) return;
+	
+	auto DamageType = Cast<UShooterDamageType>(DamageEvent.DamageTypeClass->GetDefaultObject());
+
+	if (DamageType)
+	{
+		switch (DamageType->Effect)
+		{
+		case EDamageEffect::Freezing:
+		{
+			bFreezed = true;
+			FreezePlayer(bFreezed);
+			GetCharacterMovement()->DisableMovement();
+
+			FTimerHandle TimerHandle;
+			auto UnfreezeDel = [&]() 
+			{ 
+				bFreezed = false;
+				FreezePlayer(bFreezed);
+				GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+			};
+			GetWorldTimerManager().SetTimer(TimerHandle, UnfreezeDel, 10.f, false);
+			break;
+		}
+		case EDamageEffect::Shrinking:
+			// TODO
+			break;
+		}
+	}
+}
+
+void AShooterCharacter::FreezePlayer_Implementation(bool bEnabled)
+{
+	AShooterPlayerController* MyPC = Cast<AShooterPlayerController>(Controller);
+
+	if (MyPC)
+	{
+		MyPC->SetFreezeMode(bEnabled);
 	}
 }
 
@@ -1256,6 +1303,7 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > &
 	// only to local owner: weapon change requests are locally instigated, other clients don't need it
 	DOREPLIFETIME_CONDITION(AShooterCharacter, Inventory, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(AShooterCharacter, Fuel, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(AShooterCharacter, bFreezed, COND_OwnerOnly);
 
 	// everyone except local owner: flag change is locally instigated
 	DOREPLIFETIME_CONDITION(AShooterCharacter, bIsTargeting, COND_SkipOwner);
@@ -1440,7 +1488,6 @@ bool AShooterCharacter::ServerStartWallJump_Validate()
 void AShooterCharacter::ServerStartHover_Implementation()
 {
 	bFlying = true;
-
 	GetWorldTimerManager().ClearTimer(JetPackTimerHandle);
 	GetWorldTimerManager().SetTimer(JetPackTimerHandle, this, &AShooterCharacter::Hovering, 0.1f, true);
 }

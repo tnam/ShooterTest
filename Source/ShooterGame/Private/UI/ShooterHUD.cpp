@@ -560,6 +560,16 @@ void AShooterHUD::DrawHUD()
 		Canvas->ApplySafeZoneTransform();
 	}
 
+	if (MyPawn && MyPawn->bFreezed)
+	{
+		// Full screen freeze status overlay
+		Canvas->PopSafeZoneTransform();
+		FCanvasTileItem TileItem(FVector2D(0, 0), LowHealthOverlayTexture->Resource, FVector2D(Canvas->ClipX, Canvas->ClipY), FLinearColor(0.0f, 0.0f, 1.0f, 0.8f));
+		TileItem.BlendMode = SE_BLEND_Translucent;
+		Canvas->DrawItem(TileItem);
+		Canvas->ApplySafeZoneTransform();
+	}
+
 	// net mode
 	if (GetNetMode() != NM_Standalone)
 	{
