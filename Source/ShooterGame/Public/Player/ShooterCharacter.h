@@ -541,11 +541,17 @@ protected:
 	UFUNCTION(reliable, server, WithValidation)
 	void ServerStartWallJump();
 
+	/** called when jet pack is activated */
 	UFUNCTION(BlueprintImplementableEvent)
 	void JetOnEvent();
 
+	/** called when jet pack is deactivated */
 	UFUNCTION(BlueprintImplementableEvent)
 	void JetOffEvent();
+
+	/** [cosmetic] set jet pack color based on team */
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetJetPackColor(float TeamIndex);
 
 protected:
 	/** Returns Mesh1P subobject **/

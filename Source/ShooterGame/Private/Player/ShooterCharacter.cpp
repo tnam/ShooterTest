@@ -220,6 +220,7 @@ void AShooterCharacter::UpdateTeamColors(UMaterialInstanceDynamic* UseMID)
 		{
 			float MaterialParam = (float)MyPlayerState->GetTeamNum();
 			UseMID->SetScalarParameterValue(TEXT("Team Color Index"), MaterialParam);
+			SetJetPackColor(MaterialParam);
 		}
 	}
 }
